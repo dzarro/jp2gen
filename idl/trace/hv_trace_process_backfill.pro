@@ -1,24 +1,43 @@
 ;
+; Written:  2013?, Ireland (NASA/GSFC)
+; Modified: Feb 2022, Zarro (ADNET/GSFC) - added 2-argument input option and use of TRACE object
+;
 ; Process large amounts of TRACE data
 ;
-; Pass in an array with dates [earlier_date, later_date]
+; Pass in an array with dates [earlier_date, later_date] or earlier_date, later_date
 ;
 ;
-PRO HV_TRACE_PROCESS_BACKFILL, date, copy2outgoing=copy2outgoing, delete_original=delete_original
+PRO HV_TRACE_PROCESS_BACKFILL, date1,date2,_extra=extra
   progname = 'hv_trace_process_backfill'
 ;
-;  Check that the date is valid.
+;-- check if input is 2-element date array or two input arguments 
+
+  case 1 of
+   n_elements(date1) eq 2: begin
+    sdate=date1[0] & edate=date1[1]
+   end
+   n_params(0) eq 2: begin
+    sdate=date1 & edate=date2
+   end
+   else: begin
+    mprint,'Input DATE must be 2-element array or two arguments.'
+    return
+   end  
+  endcase
+
+  if ~valid_time(sdate,/scalar) || ~valid_time(edate,/scalar) then begin
+   mprint,'Input DATE must have two valid time elements'
+   return
+  endif
+
 ;
-  if (n_elements(date) eq 1) or (n_elements(date) gt 2) then message, $
-     'DATE must have 2 elements'
-  message = ''
-  utc = anytim2utc(date, errmsg=message)
-  if message ne '' then message, message
+; Get the day components
 ;
-; Get the dates
-;
-  mjd_start = date2mjd(nint(strmid(date[0],0,4)),nint(strmid(date[0],5,2)),nint(strmid(date[0],8,2)))
-  mjd_end   = date2mjd(nint(strmid(date[1],0,4)),nint(strmid(date[1],5,2)),nint(strmid(date[1],8,2)))
+
+  int_dates=anytim2utc([sdate,edate],/int)
+  mjd_start=int_dates[0].mjd
+  mjd_end=int_dates[1].mjd
+  
   if mjd_start gt mjd_end then begin
      print,progname + ': start date must be earlier than end date since this program works backwards from earlier times'
      print,progname + ': stopping.'
@@ -90,19 +109,20 @@ PRO HV_TRACE_PROCESS_BACKFILL, date, copy2outgoing=copy2outgoing, delete_origina
         ; Start and the end times
         start_time = this_date + ' ' + hourlist[i]
         end_time = this_date + ' ' + hourlist[i+1]
-	print, start_time,end_time
+	print, start_time,' ',end_time
 
-        ; Query the catalog
-        trace_cat, start_time, end_time, catalog, status=status
-
-	; If there is data, make the JPEG2000 files
-	if status eq 1 then begin
-          ; Convert the catalog entries to file names
-          trace_cat2data,catalog,files,-1,/filedset
-
-          ; Send the files list, then prep the data and write a JP2 file for each of the files
-          HV_TRACE_PREP,files, copy2outgoing=copy2outgoing, delete_original=delete_original
-        endif
+;-- use TRACE object to search for files
+        
+        common stash,tobj
+        if ~obj_valid(tobj) then tobj=obj_new('trace')
+        files=tobj->cat_search(start_time,end_time,count=count,/verbose)
+        if count eq 0 then continue                                             ;-- skip to next block if no files found  
+        
+; Send the files list, then prep the data and write a JP2 file for
+; each of the files
+        
+        HV_TRACE_PREP,files,object=tobj,_extra=extra
+        
      endfor
   endrep until mjd lt mjd_start
 
