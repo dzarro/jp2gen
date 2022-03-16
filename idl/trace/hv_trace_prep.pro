@@ -36,7 +36,7 @@ PRO HV_TRACE_PREP,filename, copy2outgoing=copy2outgoing,verbose=verbose,object=t
  ; read in index from file
  for i=0,nfiles-1 do begin
   if verbose then mprint,'Processing '+filename[i]
-  tobj->read,filename[i],-1,index=index
+  tobj->read,filename[i],-1,index=index,/nodata
 
   ; split up by measurement
   for j = 0, nmeasurement-1 do begin
@@ -67,7 +67,7 @@ PRO HV_TRACE_PREP,filename, copy2outgoing=copy2outgoing,verbose=verbose,object=t
 
       hv_trace_prep2jp2,outindex,sdata,jp2_filename=jp2_filename, fitsroot=file_basename(filename[i]),_extra=extra
       
-      if keyword_set(copy2outgoing) then HV_COPY2OUTGOING,jp2_filename
+      if keyword_set(copy2outgoing) then HV_COPY2OUTGOING,jp2_filename,_extra=extra
       
      endfor    ;-- end k-loop
   endfor       ;-- end j-loop
