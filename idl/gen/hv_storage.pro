@@ -4,7 +4,8 @@
 ; programs and data are stored.
 ; 2012/10/01 Terje Fredvik, if run by multiple processes in Oslo get the
 ; hv_root directory from the OSLO_HV_ROOT environment variable instead of
-; getting this info from hv_writtenby. 
+; getting this info from hv_writtenby
+; 2022/03/27 Zarro (ADNET) - replaced 'spawn' by OS-independent IDL calls. 
 ;
 ;
 ; See the wiki
@@ -31,22 +32,27 @@ FUNCTION HV_STORAGE,write_this,nickname = nickname, no_db = no_db, no_log = no_l
 ; The write subdirectory 
 ;
   hv_write = hv_root + 'write' + path_sep() 
-  if not(is_dir(hv_write)) then spawn,'mkdir -p '+ hv_write
+;  if not(is_dir(hv_write)) then spawn,'mkdir -p '+ hv_write
+  if ~is_dir(hv_write) then mk_dir,hv_write
 ;
 ; Outgoing
 ;
   outgoing = hv_write + 'outgoing' + path_sep()
-  if not(is_dir(outgoing)) then spawn,'mkdir -p '+ outgoing
+;  if not(is_dir(outgoing)) then spawn,'mkdir -p '+ outgoing
+  if ~is_dir(outgoing) then mk_dir,outgoing 
 ;
 ; Web - notices from JP2Gen that are made available via the web.
 ;
   web = hv_write + 'web' + path_sep()
-  if not(is_dir(web)) then spawn,'mkdir -p '+ web
+;  if not(is_dir(web)) then spawn,'mkdir -p '+ web
+  if ~is_dir(web) then mk_dir,web
 ;
 ; Update the root for the version number and device nickname
 ;
   hvr = hv_write + 'v' + trim((HVS_GEN()).source.jp2gen_version) + path_sep()
-  if not(is_dir(hvr)) then spawn,'mkdir -p '+ hvr
+;  if not(is_dir(hvr)) then spawn,'mkdir -p '+ hvr
+  if ~is_dir(hvr) then mk_dir,hvr
+  
 ;
 ; Create the necessary subdirectory locations
 ;
@@ -61,27 +67,30 @@ FUNCTION HV_STORAGE,write_this,nickname = nickname, no_db = no_db, no_log = no_l
 ; JP2 files for a given nickname
 ;
      jp2_location = hvr_jp2 + nickname + path_sep()
-     if not(is_dir(jp2_location)) then begin
-        if not(keyword_set(no_jp2)) then begin
-           spawn,'mkdir -p '+ jp2_location
+     if ~is_dir(jp2_location) then begin
+        if ~keyword_set(no_jp2) then begin
+;        spawn,'mkdir -p '+ jp2_location
+         mk_dir,jp2_location           
         endif
      endif
 ;
 ; Log files
 ;
      log_location = hvr + 'log' + path_sep() + nickname + path_sep()
-     if not(is_dir(log_location)) then begin
-        if not(keyword_set(no_log)) then begin
-           spawn,'mkdir -p '+ log_location
+     if ~is_dir(log_location) then begin
+        if ~keyword_set(no_log) then begin
+;        spawn,'mkdir -p '+ log_location
+         mk_dir,log_location
         endif
      endif
 ;
 ; Database
 ;
      db_location = hvr + 'db' + path_sep() + nickname + path_sep()
-     if not(is_dir(db_location)) then begin
-        if not(keyword_set(no_db)) then begin
-           spawn,'mkdir -p '+ db_location
+     if ~is_dir(db_location) then begin
+        if ~keyword_set(no_db) then begin
+;        spawn,'mkdir -p '+ db_location
+         mk_dir,db_location
         endif
      endif
      
