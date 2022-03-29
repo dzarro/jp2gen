@@ -60,8 +60,8 @@ PRO HV_TRACE_PREP,filename, copy2outgoing=copy2outgoing,verbose=verbose,object=t
       outindex=tobj.index
       outdata=tobj.data
 
-      ; Use the default byte scaling to get nice images
-      sdata = tobj->scale(outindex,outdata, /byte)
+      ; Use log byte scaling to get nice images
+      sdata = tobj->scale(outindex,outdata, /log)
 
       ; for each image, call the JPEG2000 writing code
 
